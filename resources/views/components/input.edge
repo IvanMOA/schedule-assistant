@@ -1,0 +1,7 @@
+<div class="mt-4">
+  <label class="block text-sm font-medium text-gray-600">{{ label }}<label>
+  <input data-testid="{{ dataTestId }}" value="{{ flashMessages.get(name, '') || ''}}" name="{{ name }}" type="{{ type }}" placeholder="{{ placeholder}}" class="w-full text-sm text-gray-600 rounded-md px-4 py-2 mt-2 border outline-none border-gray-300 transition-color duration-200 focus:outline-none ring-2 ring-transparent focus:ring-indigo-400" />
+  @if(errors)
+  <span class="text-xs text-red-400">{{ errors }}</span>
+  @end
+</div>

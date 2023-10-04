@@ -2,14 +2,23 @@
 @set('title', 'Inicia sesión')
 
 @section('body')
-  <section class="hero is-warning">
-    <div class="hero-body">
-      <p class="title">
-        Title
-      </p>
-      <p class="subtitle">
-        Subtitle
-      </p>
-    </div>
-  </section>
+<section>
+  <div class="flex items-center justify-center min-h-screen bg-gray-100">
+      <div class="px-8 py-6 mx-4 mt-4 text-left bg-white shadow-lg md:w-1/3 lg:w-1/3 sm:w-1/3">
+          <h3 class="text-2xl font-bold text-center">Inicia sesión</h3>
+          <p class="text-gray-500 text-xm text-center mt-4 mb-8">Utiliza las mismas credenciales que utilizas para iniciar sesión en SIASE</p>
+          <form v-scope="{ isSubmitting: false }" @submit="isSubmitting = true"  action="/login" method="POST">
+              <div class="mt-4">
+                  @!component('components/input', { name: "enrollment", label: 'Matrícula', type: 'text', placeholder: '1911084', errors: flashMessages.get("errors.enrollment") })
+                  @!component('components/input', { name: "password", label: 'Contraseña', type: 'password', placeholder: 'your password', errors: flashMessages.get("errors.password")})
+                  <div class="flex">
+                    @!component('components/button', { text: "Iniciar sesión", disabled: "isSubmitting" })
+                  </div>
+              </div>
+          </form>
+          {{ flashMessages.get("message.text") }}
+          {{ flashMessages.get("message.type") }}
+      </div>
+  </div>
+</section>
 @end

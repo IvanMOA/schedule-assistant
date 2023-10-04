@@ -47,7 +47,7 @@ export function playwrightClient({
               await enrollmentInput.fill(enrollment) // enter enrollment arg
               await passwordInput.fill(password) // enter password arg
 
-              await (await queries.findByRole(loginDoc, 'button', { name: 'Sign in' })).click() // submit the form
+              await (await queries.findByText(loginDoc, 'Iniciar sesión')).click() // submit the form
             }
             test.context.getScreen = async () => {
               return getQueriesForElement(await getDocument(test.context.page))
