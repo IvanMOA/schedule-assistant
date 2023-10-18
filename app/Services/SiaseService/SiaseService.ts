@@ -34,7 +34,7 @@ export class SiaseService {
     })
   }
   public async login(enrollment: string, password: string) {
-    const { data } = await this.http.get('/', {
+    const { data } = await this.http.get('', {
       params: {
         [this.loginParams.USER_TYPE]: SiaseUserType.Student,
         [this.loginParams.ENROLLMENT]: enrollment,
@@ -46,8 +46,10 @@ export class SiaseService {
     const isErrorPath = path(['LoginAppResponse', 'ttError', 'ttErrorRow', 'lError'])
     const jsonResponse = this.xmlParser.parse(data)
     const isError = isErrorPath(jsonResponse)
+    console.log(isError)
     if (isError === false) {
-      return 'ok'
+      console.log(enrollment)
+      return { enrollment }
     } else {
       return null
     }

@@ -1,0 +1,12 @@
+<form hx-post="/login" hx-swap="outerHTML" hx-indicator="#indicator">
+  <div class="mt-4">
+    @!component('components/input', { name: "enrollment", label: 'Matrícula', type: 'text', placeholder: '1911084', errors: flashMessages.get("errors.enrollment") })
+    @!component('components/input', { name: "password", label: 'Contraseña', type: 'password', placeholder: 'your password', errors: flashMessages.get("errors.password")})
+    <div class="flex">
+      @component('components/button')
+        <i id="indicator" class="fa-solid fa-spinner fa-spin mr-2 htmx-indicator"></i>
+        <span>Iniciar sesión</span>
+      @end
+    </div>
+  </div>
+</form>
