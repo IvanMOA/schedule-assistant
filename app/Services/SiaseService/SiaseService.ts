@@ -2,7 +2,10 @@ import { XMLParser } from 'fast-xml-parser'
 import axios, { AxiosInstance } from 'axios'
 import Env from '@ioc:Adonis/Core/Env'
 import { inject } from '@adonisjs/fold'
-import { z } from 'zod'
+import {
+  loginResponseIsError,
+  loginResponseSchema,
+} from 'App/Services/SiaseService/siaseLoginResponseSchema'
 
 enum SiaseUserType {
   Student = '01',
@@ -42,9 +45,9 @@ export class SiaseService {
       },
     })
     const jsonResponse = this.xmlParser.parse(data)
-    const response = await this.loginResponseSchema.safeParse(jsonResponse)
+    const response = await loginResponseSchema.safeParse(jsonResponse)
     if (!response.success) return null
-    if (this.loginResponseIsError(response.data)) return null
+    if (loginResponseIsError(response.data)) return null
     return {
       enrollment,
       careers: response.data.LoginAppResponse.ttCarrera.ttCarreraRow.map((career) => ({
@@ -53,42 +56,5 @@ export class SiaseService {
         shortName: career.Abreviatura,
       })),
     }
-  }
-  private loginResponseSuccessSchema = z.object({
-    LoginAppResponse: z.object({
-      pochTipCve: z.string(),
-      pochNombre: z.string(),
-      pochCtrl: z.string(),
-      Usu: z.string(),
-      TipCve: z.string(),
-      ttError: z.object({
-        ttErrorRow: z.object({ lError: z.literal(false), cError: z.string() }),
-      }),
-      ttCarrera: z.object({
-        ttCarreraRow: z.array(
-          z.object({
-            CveCarrera: z.string(),
-            Abreviatura: z.string(),
-            DesCarrera: z.string(),
-          })
-        ),
-      }),
-    }),
-  })
-  private loginResponseErrorSchema = z.object({
-    LoginAppResponse: z.object({
-      ttError: z.object({
-        ttErrorRow: z.object({ lError: z.literal(true), cError: z.string() }),
-      }),
-    }),
-  })
-  private loginResponseSchema = z.union([
-    this.loginResponseSuccessSchema,
-    this.loginResponseErrorSchema,
-  ])
-  private loginResponseIsError = (
-    response: z.infer<typeof this.loginResponseSuccessSchema | typeof this.loginResponseErrorSchema>
-  ): response is z.infer<typeof this.loginResponseErrorSchema> => {
-    return response.LoginAppResponse.ttError.ttErrorRow.lError
   }
 }
