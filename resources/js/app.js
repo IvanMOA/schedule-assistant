@@ -1,11 +1,12 @@
 import '../css/app.css'
-
+console.log(' testing app.js ')
 document.addEventListener('alpine:init', () => {
   console.log('Init alpine')
   Alpine.store('toast', {
     message: null,
   })
 })
+
 document.addEventListener('htmx:responseError', (event) => {
   const toastStore = Alpine.store('toast')
   toastStore.message = errorMessage(event.detail.xhr.response)

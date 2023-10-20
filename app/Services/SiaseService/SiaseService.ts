@@ -1,10 +1,9 @@
 import { XMLParser } from 'fast-xml-parser'
 import axios, { AxiosInstance } from 'axios'
 import Env from '@ioc:Adonis/Core/Env'
-import { path } from 'ramda'
 import { inject } from '@adonisjs/fold'
-import { AuthenticationException } from '@adonisjs/auth/build/standalone'
-import { HttpException } from '@adonisjs/http-server/build/src/Exceptions/HttpException'
+import { z } from 'zod'
+
 enum SiaseUserType {
   Student = '01',
 }
@@ -42,16 +41,54 @@ export class SiaseService {
         [this.loginParams.SOMETHING]: '1',
       },
     })
-    console.log(data)
-    const isErrorPath = path(['LoginAppResponse', 'ttError', 'ttErrorRow', 'lError'])
     const jsonResponse = this.xmlParser.parse(data)
-    const isError = isErrorPath(jsonResponse)
-    console.log(isError)
-    if (isError === false) {
-      console.log(enrollment)
-      return { enrollment }
-    } else {
-      return null
+    const response = await this.loginResponseSchema.safeParse(jsonResponse)
+    if (!response.success) return null
+    if (this.loginResponseIsError(response.data)) return null
+    return {
+      enrollment,
+      careers: response.data.LoginAppResponse.ttCarrera.ttCarreraRow.map((career) => ({
+        key: career.CveCarrera,
+        name: career.DesCarrera,
+        shortName: career.Abreviatura,
+      })),
     }
+  }
+  private loginResponseSuccessSchema = z.object({
+    LoginAppResponse: z.object({
+      pochTipCve: z.string(),
+      pochNombre: z.string(),
+      pochCtrl: z.string(),
+      Usu: z.string(),
+      TipCve: z.string(),
+      ttError: z.object({
+        ttErrorRow: z.object({ lError: z.literal(false), cError: z.string() }),
+      }),
+      ttCarrera: z.object({
+        ttCarreraRow: z.array(
+          z.object({
+            CveCarrera: z.string(),
+            Abreviatura: z.string(),
+            DesCarrera: z.string(),
+          })
+        ),
+      }),
+    }),
+  })
+  private loginResponseErrorSchema = z.object({
+    LoginAppResponse: z.object({
+      ttError: z.object({
+        ttErrorRow: z.object({ lError: z.literal(true), cError: z.string() }),
+      }),
+    }),
+  })
+  private loginResponseSchema = z.union([
+    this.loginResponseSuccessSchema,
+    this.loginResponseErrorSchema,
+  ])
+  private loginResponseIsError = (
+    response: z.infer<typeof this.loginResponseSuccessSchema | typeof this.loginResponseErrorSchema>
+  ): response is z.infer<typeof this.loginResponseErrorSchema> => {
+    return response.LoginAppResponse.ttError.ttErrorRow.lError
   }
 }
