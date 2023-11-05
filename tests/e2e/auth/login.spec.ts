@@ -4,37 +4,34 @@ import nock from 'nock'
 import Career from 'App/Models/Career'
 import { useGlobalTransaction } from '../../useGlobalTransaction'
 import User from 'App/Models/User'
+import { LoginPage } from '../pages/LoginPage'
 
 test.group('login', (group) => {
   group.each.setup(useGlobalTransaction)
   test('shows invalid credentials message a single time', async ({ visit }) => {
-    const page = await visit('/login')
+    const page = await visit(LoginPage)
     const mockedSiaseLoginRequest = nock(Env.get('SIASE_BASE_URL'))
       .get('')
       .query(() => true)
       .reply(200, siaseLoginMockedErrorResponse)
 
-    await page.getByLabel('Matrícula').fill('2006610')
-    await page.getByLabel('Contraseña').fill('asdasd')
-    await page.getByText(/Iniciar sesión/).click()
+    await page.login('2006610', 'asdasd')
 
-    await page.assertExists(page.getByText(/Credenciales inválidas/))
+    await page.page.assertExists(page.page.getByText(/Credenciales inválidas/))
 
     mockedSiaseLoginRequest.done()
   })
   test('logs in', async ({ assert, visit }) => {
-    const page = await visit('/login')
+    const page = await visit(LoginPage)
     const mockedSiaseLoginRequest = nock(Env.get('SIASE_BASE_URL'))
       .get('')
       .query(() => true)
       .reply(200, siaseLoginMockedSuccessResponse)
 
-    await page.getByLabel('Matrícula').fill('2006610')
-    await page.getByLabel('Contraseña').fill('asdasd')
-    await page.getByText(/Iniciar sesión/).click()
+    await page.login('2006610', 'asdasd')
 
-    await page.waitForURL('/')
-    await page.assertExists(page.getByText(/Bienvenido, 2006610/))
+    await page.page.waitForURL('/')
+    await page.page.assertExists(page.page.getByText(/Bienvenido, 2006610/))
 
     mockedSiaseLoginRequest.done()
     const careers = await Career.all()
