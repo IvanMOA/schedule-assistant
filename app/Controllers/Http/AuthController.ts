@@ -6,6 +6,7 @@ import User from 'App/Models/User'
 import Database from '@ioc:Adonis/Lucid/Database'
 import Career from 'App/Models/Career'
 import UnAuthenticatedException from 'App/Exceptions/UnAuthenticatedException'
+import Class from 'App/Models/Class'
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 @inject()
 export default class AuthController {
@@ -32,7 +33,16 @@ export default class AuthController {
           client: trx,
         }
       )
-      await Career.createMany(result.careers, { client: trx })
+      const careers = await Career.createMany(result.careers, { client: trx })
+      for (const career of careers) {
+        const scheduleResult = await this.siaseService.schedule(
+          payload.enrollment,
+          result.siaseSession,
+          career.key
+        )
+        if (scheduleResult === null) continue
+        await career.related('classes').createMany(scheduleResult.classes, { client: trx })
+      }
       await trx.commit()
       await auth.use('web').login(user)
       response.header('HX-Redirect', '/')

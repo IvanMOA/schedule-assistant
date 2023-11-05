@@ -5,6 +5,10 @@ import Career from 'App/Models/Career'
 import { useGlobalTransaction } from '../../useGlobalTransaction'
 import User from 'App/Models/User'
 import { LoginPage } from '../pages/LoginPage'
+import { siaseLoginMockedSuccessResponse } from '../fixtures/siaseLoginMockedSuccessResponse'
+import { siaseLoginMockedErrorResponse } from '../fixtures/siaseLoginMockedErrorResponse'
+import { siaseScheduleMockedSuccessResponse } from '../fixtures/siaseScheduleMockedSuccessResponse'
+import { siaseScheduleMockedErrorResponse } from '../fixtures/siaseScheduleMockedErrorResponse'
 
 test.group('login', (group) => {
   group.each.setup(useGlobalTransaction)
@@ -25,8 +29,32 @@ test.group('login', (group) => {
     const page = await visit(LoginPage)
     const mockedSiaseLoginRequest = nock(Env.get('SIASE_BASE_URL'))
       .get('')
-      .query(() => true)
+      .query((parsedQuery) => parsedQuery['6bdf3ca'] === '1')
       .reply(200, siaseLoginMockedSuccessResponse)
+    // Para ITS, si hay horario
+    const mockedSiaseITSScheduleRequest = nock(Env.get('SIASE_BASE_URL'))
+      .get('')
+      .query(
+        (parsedQuery) =>
+          parsedQuery['6bdf3ca'] === '4' && parsedQuery['CveCarrera'] === '0x0000000000af91dd'
+      )
+      .reply(200, siaseScheduleMockedSuccessResponse)
+    // Para bachillerato bilingue, no hay horario y retorna error
+    const mockedSiaseBBILScheduleRequest = nock(Env.get('SIASE_BASE_URL'))
+      .get('')
+      .query(
+        (parsedQuery) =>
+          parsedQuery['6bdf3ca'] === '4' && parsedQuery['CveCarrera'] === '0x0000000000a45c7c'
+      )
+      .reply(200, siaseScheduleMockedErrorResponse)
+    // Para Alemán, no hay horario y retorna error
+    const mockedSiaseALEMScheduleRequest = nock(Env.get('SIASE_BASE_URL'))
+      .get('')
+      .query(
+        (parsedQuery) =>
+          parsedQuery['6bdf3ca'] === '4' && parsedQuery['CveCarrera'] === '0x0000000000b27eea'
+      )
+      .reply(200, siaseScheduleMockedErrorResponse)
 
     await page.login('2006610', 'asdasd')
 
@@ -34,66 +62,27 @@ test.group('login', (group) => {
     await page.page.assertExists(page.page.getByText(/Bienvenido, 2006610/))
 
     mockedSiaseLoginRequest.done()
-    const careers = await Career.all()
+    mockedSiaseITSScheduleRequest.done()
+    mockedSiaseBBILScheduleRequest.done()
+    mockedSiaseALEMScheduleRequest.done()
+
+    const careers = await Career.query().preload('classes')
+    const ITSCareer = careers.find((career) => career.key === '0x0000000000af91dd')
+    const BBILCareer = careers.find((career) => career.key === '0x0000000000a45c7c')
+    const ALEMCareer = careers.find((career) => career.key === '0x0000000000b27eea')
     assert.isNotNull(await User.first())
     assert.lengthOf(careers, 3)
-    assert.equal(careers[2].key, '0x0000000000a45c7c')
-    assert.equal(careers[2].name, 'BACHILLERATO BILINGUE')
-    assert.equal(careers[2].shortName, 'BBIL')
-  })
+    assert.equal(ITSCareer?.key, '0x0000000000af91dd')
+    assert.equal(ITSCareer?.name, 'INGENIERO EN TECNOLOGIA DE SOFTWARE')
+    assert.equal(ITSCareer?.shortName, 'ITS')
+    assert.lengthOf(ITSCareer!.classes, 12)
+    assert.equal(BBILCareer?.key, '0x0000000000a45c7c')
+    assert.equal(BBILCareer?.name, 'BACHILLERATO BILINGUE')
+    assert.equal(BBILCareer?.shortName, 'BBIL')
+    assert.lengthOf(BBILCareer!.classes, 0)
+    assert.equal(ALEMCareer?.key, '0x0000000000b27eea')
+    assert.equal(ALEMCareer?.name, 'ALEMAN')
+    assert.equal(ALEMCareer?.shortName, 'ALEM')
+    assert.lengthOf(ALEMCareer!.classes, 0)
+  }).pin()
 })
-
-var siaseLoginMockedErrorResponse = `<LoginAppResponse xmlns="urn:siase:uanl:Uanl" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                  xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:S
-                  OAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-  <result xsi:nil="true"></result>
-  <pochUsuCve></pochUsuCve>
-  <pochTipCve></pochTipCve>
-  <pochNombre></pochNombre>
-  <pochCtrl></pochCtrl>
-  <Usu></Usu>
-  <TipCve></TipCve>
-  <ttError>
-    <ttErrorRow>
-      <lError>true</l
-        Error>
-        <cError>A2.- Combinación incorrecta usuario y clave.</cError>
-    </ttErrorRow>
-  </ttError>
-  <ttCarrera></ttCarrera>
-    <ttDepend></ttDepend>
-</LoginAppResponse>
-`
-var siaseLoginMockedSuccessResponse = `<LoginAppResponse xmlns="urn:SIASE:MovilNativo:MovilNativo" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/">
-    <result xsi:nil="true"></result>
-    <pochUsuCve>2006610</pochUsuCve>
-    <pochTipCve></pochTipCve>
-    <pochNombre>MARCELO TREVI&#xd1;O JUAREZ</pochNombre>
-    <pochCtrl>tCwJEvzwH9sgRKFRAiSJQdq142E=</pochCtrl>
-    <Usu>0x000000000e4eecda</Usu>
-    <TipCve>01</TipCve>
-    <ttError>
-        <ttErrorRow>
-            <lError>false</lError>
-            <cError>OK</cError>
-        </ttErrorRow>
-    </ttError>
-    <ttCarrera>
-        <ttCarreraRow>
-            <CveCarrera>0x0000000000a45c7c</CveCarrera>
-            <Abreviatura>BBIL</Abreviatura>
-            <DesCarrera>BACHILLERATO BILINGUE</DesCarrera>
-        </ttCarreraRow>
-        <ttCarreraRow>
-            <CveCarrera>0x0000000000af91dd</CveCarrera>
-            <Abreviatura>ITS</Abreviatura>
-            <DesCarrera>INGENIERO EN TECNOLOGIA DE SOFTWARE</DesCarrera>
-        </ttCarreraRow>
-        <ttCarreraRow>
-            <CveCarrera>0x0000000000b27eea</CveCarrera>
-            <Abreviatura>ALEM</Abreviatura>
-            <DesCarrera>ALEMAN</DesCarrera>
-        </ttCarreraRow>
-    </ttCarrera>
-    <ttDepend></ttDepend>
-</LoginAppResponse>`

@@ -6,6 +6,10 @@ import {
   loginResponseIsError,
   loginResponseSchema,
 } from 'App/Services/SiaseService/siaseLoginResponseSchema'
+import {
+  scheduleResponseIsError,
+  scheduleResponseSchema,
+} from 'App/Services/SiaseService/siaseScheduleResponseSchema'
 
 enum SiaseUserType {
   Student = '01',
@@ -24,7 +28,13 @@ export class SiaseService {
     USER_TYPE: '0c19de58',
     ENROLLMENT: '108be0d',
     PASSWORD: 'd937aa6b',
-    SOMETHING: '6bdf3ca',
+    PETITION_TYPE: '6bdf3ca',
+  }
+  private scheduleParams = {
+    ENROLLMENT: '108be0d',
+    SIASE_SESSION: 'pochCtrl',
+    CAREER_KEY: 'CveCarrera',
+    PETITION_TYPE: '6bdf3ca',
   }
   constructor() {
     this.http = axios.create({
@@ -41,7 +51,7 @@ export class SiaseService {
         [this.loginParams.USER_TYPE]: SiaseUserType.Student,
         [this.loginParams.ENROLLMENT]: enrollment,
         [this.loginParams.PASSWORD]: password,
-        [this.loginParams.SOMETHING]: '1',
+        [this.loginParams.PETITION_TYPE]: '1',
       },
     })
     const jsonResponse = this.xmlParser.parse(data)
@@ -50,11 +60,42 @@ export class SiaseService {
     if (loginResponseIsError(response.data)) return null
     return {
       enrollment,
+      siaseSession: response.data.LoginAppResponse.pochCtrl,
       careers: response.data.LoginAppResponse.ttCarrera.ttCarreraRow.map((career) => ({
         key: career.CveCarrera,
         name: career.DesCarrera,
         shortName: career.Abreviatura,
       })),
+    }
+  }
+  public async schedule(enrollment: string, siaseSession: string, careerKey: string) {
+    try {
+      const { data } = await this.http.get('', {
+        params: {
+          [this.scheduleParams.ENROLLMENT]: enrollment,
+          [this.scheduleParams.SIASE_SESSION]: siaseSession,
+          [this.scheduleParams.CAREER_KEY]: careerKey,
+          [this.scheduleParams.PETITION_TYPE]: '4',
+        },
+      })
+      const jsonResponse = this.xmlParser.parse(data)
+      const response = await scheduleResponseSchema.safeParse(jsonResponse)
+      if (!response.success) return null
+      if (scheduleResponseIsError(response.data)) return null
+      return {
+        classes: response.data.HorarioEstPerActivoResponse.ttHorario.ttHorarioRow.map((row) => ({
+          subjectShortName: row.DescCMateria,
+          subjectName: row.DescLMateria,
+          day: row.Dia,
+          startHour: row.HoraInicio,
+          endHour: row.HoraFin,
+          group: row.Grupo,
+          classroom: row.Salon,
+        })),
+      }
+    } catch (e) {
+      console.log(e)
+      throw e
     }
   }
 }
