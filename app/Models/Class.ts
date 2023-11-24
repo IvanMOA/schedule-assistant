@@ -1,6 +1,7 @@
 import { DateTime } from 'luxon'
 import { BaseModel, column, BelongsTo, belongsTo } from '@ioc:Adonis/Lucid/Orm'
 import Career from 'App/Models/Career'
+import { Day } from 'App/Types/Day'
 
 export default class Class extends BaseModel {
   @column({ isPrimary: true })
@@ -10,7 +11,7 @@ export default class Class extends BaseModel {
   @column()
   public subjectShortName: string
   @column()
-  public day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday'
+  public day: Day
   @column()
   public startHour: string
   @column()

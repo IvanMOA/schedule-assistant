@@ -10,6 +10,7 @@ import {
   scheduleResponseIsError,
   scheduleResponseSchema,
 } from 'App/Services/SiaseService/siaseScheduleResponseSchema'
+import { Day } from 'App/Types/Day'
 
 enum SiaseUserType {
   Student = '01',
@@ -86,7 +87,7 @@ export class SiaseService {
         classes: response.data.HorarioEstPerActivoResponse.ttHorario.ttHorarioRow.map((row) => ({
           subjectShortName: row.DescCMateria,
           subjectName: row.DescLMateria,
-          day: row.Dia,
+          day: row.Dia as Day,
           startHour: row.HoraInicio,
           endHour: row.HoraFin,
           group: row.Grupo,

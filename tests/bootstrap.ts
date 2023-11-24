@@ -8,7 +8,17 @@
 import type { Config } from '@japa/runner'
 import TestUtils from '@ioc:Adonis/Core/TestUtils'
 import { assert, runFailedTests, specReporter, apiClient } from '@japa/preset-adonis'
-import { browserClient } from '@japa/browser-client'
+import { browserClient, decoratorsCollection } from '@japa/browser-client'
+import User from 'App/Models/User'
+
+decoratorsCollection.register({
+  context(context) {
+    context.loginAs = async function (user: User) {
+      // @ts-ignore
+      await context.request.post('/login-as', { data: { user_id: user.id } })
+    }
+  },
+})
 
 /*
 |--------------------------------------------------------------------------

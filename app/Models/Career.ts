@@ -11,6 +11,8 @@ export default class Career extends BaseModel {
   public name: string
   @column()
   public shortName: string
+  @column()
+  public userId: string
   @hasMany(() => Class)
   public classes: HasMany<typeof Class>
   @column.dateTime({ autoCreate: true })

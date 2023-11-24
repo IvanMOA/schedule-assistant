@@ -2,7 +2,21 @@
 @set('title', 'Inicia sesión')
 
 @section('body')
-<section>
-  <h1>Bienvenido, {{ auth.user.id }}</h1>
-</section>
+<main class="min-h-screen pt-16 bg-gray-50">
+  <section class="max-w-2xl mx-auto flex items-end flex-col">
+    <p class="mb-1 text-sm text-gray-500">Carrera seleccionada</p>
+    @component('components/dropdown/index.edge', { value: selectedCareer.shortName })
+      @each(career in auth.user.careers)
+        @component('components/dropdown/item.edge')
+          <form action="{{ route('HomeController.selectCareer', { id: career.id }) }}" method="POST">
+            <button>{{ career.name }}</button>
+          </form>
+        @end
+      @end
+    @end
+  </section>
+  <section class="max-w-2xl mt-16 mx-auto bg-white rounded-md px-4 py-2 shadow-md">
+   {{ selectedCareer.classes.map( c => c.subjectName ) }}
+  </section>
+</main>
 @end
